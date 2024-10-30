@@ -1,4 +1,4 @@
-const { v2 as cloudinary } = require("cloudinary");
+const { v2: cloudinary } = require("cloudinary");
 const fs = require("fs");
 
 cloudinary.config({ 
