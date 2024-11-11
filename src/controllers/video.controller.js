@@ -9,7 +9,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
   const userId = req.user._id;
 
-
   if (!title && !description) {
     throw new ApiError(400, "All fields are required");
   }
@@ -62,4 +61,72 @@ const publishAVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, newVideo, "video uploaded successfully"));
 });
 
-module.exports = { publishAVideo };
+const getAllVideos = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    query = "",
+    sortBy = "createdAt",
+    sortType = "desc",
+    userId,
+  } = req.query;
+
+  // Step 1: Build aggregation pipeline for filtering, sorting, and pagination
+  const pipeline = [];
+
+  // Step 2: Add filtering by query and userId if provided
+  if (query) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { title: { $regex: query, $options: "i" } },
+          { description: { $regex: query, $options: "i" } },
+        ],
+      },
+    });
+  }
+
+  if (userId) {
+    pipeline.push({
+      $match: {
+        owner: mongoose.Types.ObjectId(userId),
+      },
+    });
+  }
+
+  // Step 3: Sorting logic based on `sortBy` and `sortType`
+  const sortOptions = {};
+  sortOptions[sortBy] = sortType === "asc" ? 1 : -1;
+  pipeline.push({ $sort: sortOptions });
+
+  // Step 4: Pagination with `mongoose-aggregate-paginate-v2`
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  };
+
+  const videos = await Video.aggregatePaginate(
+    Video.aggregate(pipeline),
+    options
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        videos: videos.docs,
+        pagination: {
+          totalDocs: videos.totalDocs,
+          totalPages: videos.totalPages,
+          page: videos.page,
+          limit: videos.limit,
+          hasNextPage: videos.hasNextPage,
+          hasPrevPage: videos.hasPrevPage,
+        },
+      },
+      "Videos retrieved successfully"
+    )
+  );
+});
+
+module.exports = { publishAVideo, getAllVideos };
