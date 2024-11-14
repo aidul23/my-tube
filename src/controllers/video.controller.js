@@ -129,4 +129,59 @@ const getAllVideos = asyncHandler(async (req, res) => {
   );
 });
 
-module.exports = { publishAVideo, getAllVideos };
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(404, "video id is required");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "video fetched successfully"));
+});
+
+const updateVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description, thumbnail } = req.body;
+  //TODO: update video details like title, description, thumbnail
+});
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const userId = req.user._id;
+
+  if (!videoId) {
+    throw new ApiError(404, "video id is required");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, "You can't delete the video");
+  }
+
+  await Video.findByIdAndDelete(videoId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "video deleted successfully!"));
+});
+
+module.exports = {
+  publishAVideo,
+  getAllVideos,
+  getVideoById,
+  updateVideo,
+  deleteVideo,
+};
