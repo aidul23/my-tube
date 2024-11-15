@@ -4,6 +4,7 @@ const {
   getAllVideos,
   getVideoById,
   deleteVideo,
+  updateVideo,
 } = require("../controllers/video.controller");
 const { upload } = require("../middlewares/multer.middleware");
 const { verifyJWT } = require("../middlewares/auth.middleware");
@@ -30,5 +31,9 @@ router.route("/videos").get(getAllVideos);
 router.route("/videos/:videoId").get(getVideoById);
 
 router.route("/videos/:videoId").delete(verifyJWT, deleteVideo);
+
+router
+  .route("/videos/:videoId")
+  .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
 
 module.exports = router;

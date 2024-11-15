@@ -149,8 +149,58 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { title, description, thumbnail } = req.body;
-  //TODO: update video details like title, description, thumbnail
+  const { title, description } = req.body;
+  const userId = req.user._id;
+  const thumbnailLocalPath = req.file?.path;
+  
+
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+
+  if (!title && !description && !thumbnailLocalPath) {
+    throw new ApiError(400, "Atleast one field required!");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, "You do not have permission to update this video");
+  }
+
+  let newThumbnail;
+  if (thumbnailLocalPath) {
+    try {
+      newThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+      console.log(newThumbnail);
+      
+      if (!newThumbnail.url) {
+        throw new Error("Thumbnail upload failed");
+      }
+    } catch (error) {
+      throw new ApiError(500, "Error while uploading thumbnail");
+    }
+  }
+
+
+  const updatedData = {};
+  if (title) updatedData.title = title;
+  if (description) updatedData.description = description;
+  if (newThumbnail?.url) updatedData.thumbnail = newThumbnail.url;
+
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    { $set: updatedData },
+    { new: true } // Return the updated document
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
