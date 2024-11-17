@@ -4,6 +4,7 @@ const { ApiResponse } = require("../utils/ApiResponse");
 const Video = require("../models/video.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const jwt = require("jsonwebtoken");
+const { Types } = require("mongoose");
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
@@ -136,7 +137,34 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "video id is required");
   }
 
-  const video = await Video.findById(videoId);
+  // const video = await Video.findById(videoId);
+
+  if (!Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid Video ID format");
+  }
+
+  const video = await Video.aggregate([
+    {
+      $match: {
+        _id: new Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "video",
+        as: "videoLikes",
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$videoLikes",
+        },
+      },
+    },
+  ]);
 
   if (!video) {
     throw new ApiError(404, "Video not found");
@@ -147,12 +175,27 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "video fetched successfully"));
 });
 
+// {
+//   $project: {
+//     _id: 1,
+//     videoFile: 1,
+//     thumbnail: 1,
+//     title: 1,
+//     description: 1,
+//     duration: 1,
+//     views: 1,
+//     isPublished: 1,
+//     owner: 1,
+//     createdAt: 1,
+//     updatedAt: 1,
+//   },
+// },
+
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { title, description } = req.body;
   const userId = req.user._id;
   const thumbnailLocalPath = req.file?.path;
-  
 
   if (!videoId) {
     throw new ApiError(400, "Video ID is required");
@@ -177,7 +220,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     try {
       newThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
       console.log(newThumbnail);
-      
+
       if (!newThumbnail.url) {
         throw new Error("Thumbnail upload failed");
       }
@@ -185,7 +228,6 @@ const updateVideo = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Error while uploading thumbnail");
     }
   }
-
 
   const updatedData = {};
   if (title) updatedData.title = title;
