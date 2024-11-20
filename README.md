@@ -22,37 +22,37 @@ MyTube is a video-sharing API built with Node.js, Express, and MongoDB. It allow
 ## Installation
 
 1. **Clone the Repository**:
-     ```bash
-     git clone https://github.com/your-username/mytube-api.git
-     cd mytube-api
-     
+   ```bash
+   git clone https://github.com/your-username/mytube-api.git
+   cd mytube-api
+   ```
 2. **Install Dependencies**:
-    ```bash
-    npm install
-
+   ```bash
+   npm install
+   ```
 3. **Set Up Environment Variables: Create a .env file in the root directory with the following variables**:
-    ```bash
-    env
-    PORT=5000
-    MONGO_URI=your_mongo_database_uri
-    JWT_SECRET=your_jwt_secret
-    CLOUDINARY_NAME=your_cloudinary_name
-    CLOUDINARY_API_KEY=your_cloudinary_api_key
-    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
+   ```bash
+   env
+   PORT=5000
+   MONGO_URI=your_mongo_database_uri
+   JWT_SECRET=your_jwt_secret
+   CLOUDINARY_NAME=your_cloudinary_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   ```
 4. **Run the Server**:
 
-    ```bash
-    npm start
-    The server will run on http://localhost:5000.
-    ```
+   ```bash
+   npm start
+   The server will run on localhost:5000.
+   ```
 ## API Endpoints
 
 **Base URL**
 
-```
-http://localhost:5000/api/v1
-```
+  ```bash
+  http://localhost:5000/api/v1
+  ```
 
 **Authentication**
 
@@ -60,6 +60,14 @@ http://localhost:5000/api/v1
 |--------|---------------|--------------------------|
 | POST   | users/auth/register | Register a new user      |
 | POST   | users/auth/login    | Login and get a JWT token |
+
+**Subscription**
+
+| Method | Endpoint               | Description                                       |
+|--------|------------------------|---------------------------------------------------|
+| POST   | /channel/:channelId    | Subscribe or unsubscribe from a channel          |
+| GET    | /channel/:channelId    | Get the list of users subscribed to a channel    |
+| GET    | /channel               | Get the list of channels the user is subscribed to |
 
 **Videos**
 
@@ -89,25 +97,26 @@ http://localhost:5000/api/v1
 - Testing: Postman (suggested for API testing)
 
 ## Project Structure
-    ```
-    mytube-api/
-    ├── src/
-    │   ├── controllers/     # Business logic for handling requests
-    │   ├── models/          # Mongoose schemas
-    │   ├── middlewares/     # Custom middleware (e.g., auth, file uploads)
-    │   ├── routes/          # Route definitions
-    │   ├── utils/           # Helper functions (e.g., error handling)
-    │   └── app.js           # Entry point
-    ├── public/              # Temp storage for uploads
-    ├── .env                 # Environment variables
-    ├── package.json         # Node.js dependencies and scripts
-    └── README.md            # Documentation
-    ```
+  ```plaintext
+  mytube-api/
+  ├── src/
+  │   ├── controllers/     # Business logic for handling requests
+  │   ├── models/          # Mongoose schemas
+  │   ├── middlewares/     # Custom middleware (e.g., auth, file uploads)
+  │   ├── routes/          # Route definitions
+  │   ├── utils/           # Helper functions (e.g., error handling)
+  │   └── app.js           # Entry point
+  ├── public/              # Temp storage for uploads
+  ├── .env                 # Environment variables
+  ├── package.json         # Node.js dependencies and scripts
+  └── README.md            # Documentation
+  ```
 ## Development
 
 ### Run the Project in Development Mode locally
-    ```
-    npm run dev
+  ```bash
+  npm run dev
+  ```
 The server will reload automatically on code changes.
 
 ## Future Enhancements
