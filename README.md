@@ -58,8 +58,8 @@ http://localhost:5000/api/v1
 
 | Method | Endpoint      | Description              |
 |--------|---------------|--------------------------|
-| POST   | /auth/register | Register a new user      |
-| POST   | /auth/login    | Login and get a JWT token |
+| POST   | users/auth/register | Register a new user      |
+| POST   | users/auth/login    | Login and get a JWT token |
 
 **Videos**
 
