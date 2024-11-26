@@ -27,16 +27,16 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
-    - name: Clear npm cache
-      run: npm cache clean --force
+    # - name: Clear npm cache
+    #   run: npm cache clean --force
 
-    - name: Remove node_modules and lock files
-      run: |
-        rm -rf node_modules
-        rm -f package-lock.json
+    # - name: Remove node_modules and lock files
+    #   run: |
+    #     rm -rf node_modules
+    #     rm -f package-lock.json
 
-    # - name: Reinstall dependencies
-    #   run: npm install
+    - name: Reinstall dependencies
+      run: npm install
         
     - name: Install Dependencies
       run: npm ci
