@@ -5,8 +5,24 @@ const Video = require("../models/video.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const jwt = require("jsonwebtoken");
 const { Types } = require("mongoose");
+const Redis = require("redis");
+const client = Redis.createClient();
+
+client.on("error", (err) => console.error("Redis Client Error", err));
+
+(async () => {
+  try {
+    await client.connect();
+    console.log("Redis connected");
+  } catch (error) {
+    console.error("Error connecting to Redis:", error);
+  }
+})();
 
 const publishAVideo = asyncHandler(async (req, res) => {
+
+  await client.del("videos");
+
   const { title, description } = req.body;
   const userId = req.user._id;
 
@@ -72,6 +88,22 @@ const getAllVideos = asyncHandler(async (req, res) => {
     userId,
   } = req.query;
 
+  // Create a unique cache key based on query parameters
+  const cacheKey = "videos";
+
+  // Check Redis cache
+  const cachedData = await client.get(cacheKey);
+  if (cachedData) {
+    console.log("Cache hit");
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        JSON.parse(cachedData),
+        "Videos retrieved successfully (from cache)"
+      )
+    );
+  }
+
   // Step 1: Build aggregation pipeline for filtering, sorting, and pagination
   const pipeline = [];
 
@@ -111,20 +143,26 @@ const getAllVideos = asyncHandler(async (req, res) => {
     options
   );
 
+  // Prepare response
+  const response = {
+    videos: videos.docs,
+    pagination: {
+      totalDocs: videos.totalDocs,
+      totalPages: videos.totalPages,
+      page: videos.page,
+      limit: videos.limit,
+      hasNextPage: videos.hasNextPage,
+      hasPrevPage: videos.hasPrevPage,
+    },
+  };
+
+  // Cache the response in Redis for future requests (e.g., 10 minutes)
+  await client.setEx(cacheKey, 3600, JSON.stringify(response));
+
   return res.status(200).json(
     new ApiResponse(
       200,
-      {
-        videos: videos.docs,
-        pagination: {
-          totalDocs: videos.totalDocs,
-          totalPages: videos.totalPages,
-          page: videos.page,
-          limit: videos.limit,
-          hasNextPage: videos.hasNextPage,
-          hasPrevPage: videos.hasPrevPage,
-        },
-      },
+      response,
       "Videos retrieved successfully"
     )
   );
@@ -185,22 +223,6 @@ const getVideoById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, video, "video fetched successfully"));
 });
-
-// {
-//   $project: {
-//     _id: 1,
-//     videoFile: 1,
-//     thumbnail: 1,
-//     title: 1,
-//     description: 1,
-//     duration: 1,
-//     views: 1,
-//     isPublished: 1,
-//     owner: 1,
-//     createdAt: 1,
-//     updatedAt: 1,
-//   },
-// },
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
